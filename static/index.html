@@ -1,0 +1,240 @@
+<!doctype html>
+<html>
+<head>
+    <title>Worker Demo</title>
+    <script type="text/javascript" src="/jquery-3.1.1.js"></script>
+
+    <style type="text/css">
+        body {
+            font-family: Verdana, Helvetica, sans-serif;
+            background-color: #eee;
+        }
+
+        #content {
+            width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border: 1px solid #999;
+            border-radius: 2px;
+            box-shadow: 0px 0px 5px #999;
+            padding: 20px;
+            text-align: center;
+        }
+
+        table {
+            font-family: monospace;
+            border-collapse: collapse;
+            margin: 16px auto;
+        }
+
+        table td, table th {
+            border: 1px solid #aaa;
+            padding: 12px;
+            word-break: break-all;
+        }
+
+        table td {
+            max-width: 400px;
+        }
+
+        table th{
+            text-align: right;
+        }
+
+        hr {
+            margin: 24px;
+        }
+
+        .flash td {
+            animation: flash 1s ease-in-out;
+            animation-iteration-count: 1;
+
+            -moz-animation: flash 1s ease-in-out;
+            -moz-animation-iteration-count: 1;
+
+            -webkit-animation: flash 1s ease-in-out;
+            -webkit-animation-iteration-count: 1;
+
+            -ms-animation: flash 1s ease-in-out;
+            -ms-animation-iteration-count: 1;
+        }
+
+        @-webkit-keyframes flash {
+            0% { background: none; }
+            50% { background: #fbf8b2; }
+            100% { background: none; }
+        }
+
+        @-moz-keyframes flash {
+            0% { background: none; }
+            50% { background: #fbf8b2; }
+            100% { background: none; }
+        }
+
+        @-ms-keyframes flash {
+            0% { background: none; }
+            50% { background: #fbf8b2; }
+            100% { background: none; }
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<div id="content">
+    <h1>Workers Demo</h1>
+    <input type="checkbox" id="automatic-requests" checked/> Automatically make requests every 5 seconds.
+    <hr/>
+    
+    <h2>Get Current Server Time</h2>
+    <button type="button" id="server-time-btn">Do it!</button>
+    <div id="time-result-error" class="error"></div>
+    <table style="display: none;" id="time-result-table">
+        <tr>
+            <th>Success</th>
+            <td id="time-result-success"></td>
+        </tr>
+        <tr>
+            <th>Request Time</th>
+            <td id="time-result-time"></td>
+        </tr>
+        <tr>
+            <th>URL</th>
+            <td>
+                <a href="/" id="time-result-url" target="_blank"></a>
+            </td>
+        </tr>
+        <tr>
+            <th>Handled By</th>
+            <td id="time-result-handled-by"></td>
+        </tr>
+        <tr>
+            <th>Current Server Time</th>
+            <td id="time-result-value"></td>
+        </tr>
+    </table>
+    
+    <hr/>
+    
+    <h2>Compute Pi</h2>
+    <div>Compute <input type="number" value="100" id="precision"/> digits of pi <button type="button" id="compute-pi-btn">Do it!</button></div>
+    <div id="pi-result-error" class="error"></div>
+    <h3 id="pi-result-heading" style="display: none;">Pi Computation Result:</h3>
+    <table style="display: none;" id="pi-result-table">
+        <tr>
+            <th>Success</th>
+            <td id="pi-result-success"></td>
+        </tr>
+        <tr>
+            <th>Time</th>
+            <td id="pi-result-time"></td>
+        </tr>
+        <tr>
+            <th>Precision</th>
+            <td id="pi-result-precision"></td>
+        </tr>
+        <tr>
+            <th>URL</th>
+            <td>
+                <a href="/" id="pi-result-url" target="_blank"></a>
+            </td>
+        </tr>
+        <tr>
+            <th>Handled By</th>
+            <td id="pi-result-handled-by"></td>
+        </tr>
+        <tr>
+            <th>Value</th>
+            <td id="pi-result-value"></td>
+        </tr>
+    </table>
+
+    <hr/>
+
+    <div style="padding: 20px;">
+        Powered by <a href="https://www.cycligent.com" target="_blank"><img src="/logo.png" style="height: 40px; vertical-align: middle;"/></a>
+    </div>
+</div>
+
+<script type="text/javascript">
+    (function() {
+        function computePi(precision) {
+            $("#pi-result-error").text("");
+            var url = "/compute-pi?precision=" + precision;
+
+            $.get(url, function(response) {
+                $("#pi-result-heading").show();
+                $("#pi-result-table").show().addClass("flash");
+                $("#pi-result-success").text(response.success);
+                $("#pi-result-time").text(response.time + "ms");
+                $("#pi-result-precision").text(response.precision);
+                $("#pi-result-url").text(url).attr("href", url);
+                $("#pi-result-handled-by").text(response.handledBy);
+                $("#pi-result-value").text(response.value);
+
+                setTimeout(function() {
+                    $("#pi-result-table").removeClass("flash");
+                }, 1000);
+            })
+                .fail(function() {
+                    console.error(arguments);
+                    $("#pi-result-error").text("Error occurred while trying to compute pi.");
+                })
+            ;
+        }
+
+        function computePiFromInput() {
+            computePi($("#precision").val() || 100);
+        }
+
+        function serverTimeGet() {
+            $("#time-result-error").text("");
+            var startTime = Date.now();
+
+            var url = "/server-time";
+            $.get(url, function(response) {
+                $("#time-result-heading").show();
+                $("#time-result-table").show().addClass("flash");
+                $("#time-result-success").text(response.success);
+                $("#time-result-time").text((Date.now() - startTime) + "ms");
+                $("#time-result-url").text(url).attr("href", url);
+                $("#time-result-handled-by").text(response.handledBy);
+                $("#time-result-value").text(response.value);
+
+                setTimeout(function() {
+                    $("#time-result-table").removeClass("flash");
+                }, 1000);
+            })
+                .fail(function() {
+                    console.error(arguments);
+                    $("#time-result-error").text("Error occurred while trying to get server time.");
+                })
+            ;
+        }
+
+        function doAll() {
+            computePiFromInput();
+            serverTimeGet();
+        }
+
+        $("#compute-pi-btn").on("click", function() {
+            computePiFromInput();
+        });
+
+        $("#server-time-btn").on("click", function() {
+            serverTimeGet();
+        });
+
+        setInterval(function() {
+            if ($("#automatic-requests").is(":checked")) {
+                doAll();
+            }
+        }, 5000);
+
+        doAll();
+    })();
+</script>
+</body>
+</html>
