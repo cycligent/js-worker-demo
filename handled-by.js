@@ -4,11 +4,43 @@ var mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;
 
 var handledBy = process.cwd();
+var handledByAllInfo = {
+    deploymentName: "aws",
+    friendlyName: "prod-worker-00",
+    roleSpec_id: "000000000000000000000000",
+    machine_id: "000000000000000000000000",
+    set_id: "000000000000000000000000",
+    roleType: "worker",
+    version: "0.0.0",
+    versionType: "prod",
+    urls: ["http://localhost:3000"],
+    size: "t2.nano",
+    status: {
+        major: "Online",
+        minor: "Healthy",
+        setByCyvisor: false,
+        cpuSamples: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        memSamples: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        memTotal: 1,
+        responseTimeSamples: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        networkTrafficSamples: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        probeCount: 0,
+        modAt: new Date()
+    },
+    modAt: new Date(),
+    modVersion: 0,
+    isDefault: true
+};
 
-function handledByGet() {
+function handledByGetStr() {
     return handledBy;
 }
-exports.handledByGet = handledByGet;
+exports.handledByGetStr = handledByGetStr;
+
+function handledByGetAll() {
+    return JSON.parse(JSON.stringify(handledByAllInfo));
+}
+exports.handledByGetAll = handledByGetAll;
 
 try {
     var instanceInfo = require(path.join(process.cwd(), "..", "..", "instance.js"));
@@ -46,19 +78,19 @@ MongoClient.connect(url, function(err, db) {
             }
 
             var roleProcess = docs[0];
-            var workerType = roleProcess.workerType;
+            handledByAllInfo = roleProcess;
 
             if (!roleProcess.workerType) {
                 if (roleProcess.roleType === "worker") {
-                    workerType = "standard";
+                    roleProcess.workerType = "standard";
                 } else if (roleProcess.roleType === "longWorker") {
-                    workerType = "long";
+                    roleProcess.workerType = "long";
                 } else {
-                    workerType = "Unknown";
+                    roleProcess.workerType = "Unknown";
                 }
             }
 
-            handledBy = roleProcess.friendlyName + " (" + workerType + ")";
+            handledBy = roleProcess.friendlyName + " (" + roleProcess.workerType + ")";
 
             db.close();
         });

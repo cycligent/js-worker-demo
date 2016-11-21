@@ -2,7 +2,7 @@ var fs = require("fs");
 var path = require("path");
 
 var Decimal = require('decimal.js');
-var handledByGet = require('./handled-by.js').handledByGet;
+var handledByGetStr = require('./handled-by.js').handledByGetStr;
 var precomputedPi = JSON.parse(fs.readFileSync(path.join(__dirname, "pi-ten-thousand.json")));
 
 // the Bailey-Borwein-Plouffe formula
@@ -68,7 +68,7 @@ function computeAndCompare(precision, callback) {
             precision: precision,
             time: (endedAt.valueOf() - startedAt.valueOf()),
             success: computeSuccess,
-            handledBy: handledByGet()
+            handledBy: handledByGetStr()
         });
     });
 }

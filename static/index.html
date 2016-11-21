@@ -10,6 +10,10 @@
             background-color: #eee;
         }
 
+        body.version-dev {
+            background-color: #fffff0;
+        }
+
         #content {
             width: 800px;
             margin: 0 auto;
@@ -84,7 +88,15 @@
 </head>
 <body>
 <div id="content">
-    <h1>Workers Demo</h1>
+    <h1>Workers Demo (<span id="version-name"></span>)</h1>
+
+    <h3 style="font-size: 12px; color: #777; margin: 0 0 20px 0;">
+        <span id="version-info"></span>
+        -
+        <span id="version-switcher"></span>
+    </h3>
+    <div id="version-types-error" class="error" style="display: none;"></div>
+    <div id="page-handled-by-error" class="error" style="display: none;"></div>
     <input type="checkbox" id="automatic-requests" checked/> Automatically click &quot;Do it!&quot; buttons every 5 seconds.
     <div style="margin-top: 8px; color: #777;">(You can still click the &quot;Do it!&quot; buttons whenever you want) </div>
     <hr/>
@@ -161,6 +173,8 @@
 
 <script type="text/javascript">
     (function() {
+        var pageHandledByInfo = {};
+
         function computePi(precision) {
             $("#pi-result-error").text("");
             var url = "/compute-pi?precision=" + precision;
@@ -215,6 +229,60 @@
             ;
         }
 
+        function handledByGet(callback) {
+            var url = "/handled-by";
+            $.get(url, function(response) {
+                pageHandledByInfo = response;
+                $("#version-name").text(response.versionType);
+                $("#version-info").text("Version: " + response.versionType + " v" + response.version + "");
+                $("body").addClass("version-" + response.versionType);
+
+                if (response.versionType === "dev") {
+                    $("#precision").val(50);
+                }
+
+                callback();
+            })
+                .fail(function() {
+                    console.error(arguments);
+                    $("#page-handled-by-error").show().text("Error occurred while trying to get server information.");
+
+                    callback();
+                })
+            ;
+        }
+
+        function versionTypesGet() {
+            var url = "/version-types";
+            $.get(url, function(response) {
+                var $versionSwitcher = $("#version-switcher");
+                $versionSwitcher.html("Switch to ");
+
+                for (var i = 0 ; i < response.versionTypes.length; i++) {
+
+                    (function(versionTypeName) {
+                        if (versionTypeName === pageHandledByInfo.versionType) {
+                            return;
+                        }
+
+                        var $link = $('<a href="javascript:void(0);"></a>');
+                        $link.text(versionTypeName);
+                        $link.on("click", function() {
+                            document.cookie = "versionType=" + versionTypeName;
+                            window.location.reload();
+                        });
+                        $versionSwitcher.append($link);
+                        $versionSwitcher.append(" ");
+                    })(response.versionTypes[i]);
+                }
+            })
+                .fail(function() {
+                    console.error(arguments);
+                    $("#version-types-error").show().text("Error occurred while trying to get versions.");
+                })
+            ;
+        }
+
         function doAll() {
             computePiFromInput();
             serverTimeGet();
@@ -234,7 +302,10 @@
             }
         }, 5000);
 
-        doAll();
+        handledByGet(function() {
+            versionTypesGet();
+            doAll();
+        });
     })();
 </script>
 </body>

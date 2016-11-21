@@ -1,10 +1,10 @@
-var handledByGet = require('./handled-by.js').handledByGet;
+var handledByGetStr = require('./handled-by.js').handledByGetStr;
 
 function serverTimeGet() {
     return {
         value: new Date().toISOString(),
         success: true,
-        handledBy: handledByGet()
+        handledBy: handledByGetStr()
     };
 }
 exports.serverTimeGet = serverTimeGet;
