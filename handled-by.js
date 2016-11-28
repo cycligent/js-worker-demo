@@ -44,55 +44,59 @@ exports.handledByGetAll = handledByGetAll;
 
 try {
     var instanceInfo = require(path.join(process.cwd(), "..", "..", "instance.js"));
+    readHandleByInfoFromMongo();
+    setInterval(readHandleByInfoFromMongo, 5000);
 } catch(e) {
     return;
 }
 
-var url = "mongodb://localhost:27017/cycligent";
+function readHandleByInfoFromMongo() {
+    var url = "mongodb://localhost:27017/cycligent";
 
-MongoClient.connect(url, function(err, db) {
-    if (err) {
-        console.error("Error connecting to MongoDB:");
-        console.error(err);
-        return;
-    }
-
-    db.collection("roleProcesses", {strict: false}, function(err, collection) {
+    MongoClient.connect(url, function(err, db) {
         if (err) {
-            console.error("Error connecting to roleProcesses collection:");
+            console.error("Error connecting to MongoDB:");
             console.error(err);
             return;
         }
 
-        collection.find({_id: new mongodb.ObjectID(instanceInfo.roleProcess_id)}).toArray(function(err, docs) {
+        db.collection("roleProcesses", {strict: false}, function(err, collection) {
             if (err) {
-                console.error("Error querying the roleProcesses collection:");
+                console.error("Error connecting to roleProcesses collection:");
                 console.error(err);
                 return;
             }
 
-            if (docs.length !== 1) {
-                console.error("Unable to find roleProcess document.");
-                console.error(err);
-                return;
-            }
-
-            var roleProcess = docs[0];
-            handledByAllInfo = roleProcess;
-
-            if (!roleProcess.workerType) {
-                if (roleProcess.roleType === "worker") {
-                    roleProcess.workerType = "standard";
-                } else if (roleProcess.roleType === "longWorker") {
-                    roleProcess.workerType = "long";
-                } else {
-                    roleProcess.workerType = "Unknown";
+            collection.find({_id: new mongodb.ObjectID(instanceInfo.roleProcess_id)}).toArray(function(err, docs) {
+                if (err) {
+                    console.error("Error querying the roleProcesses collection:");
+                    console.error(err);
+                    return;
                 }
-            }
 
-            handledBy = roleProcess.friendlyName + " (" + roleProcess.workerType + ")";
+                if (docs.length !== 1) {
+                    console.error("Unable to find roleProcess document.");
+                    console.error(err);
+                    return;
+                }
 
-            db.close();
+                var roleProcess = docs[0];
+                handledByAllInfo = roleProcess;
+
+                if (!roleProcess.workerType) {
+                    if (roleProcess.roleType === "worker") {
+                        roleProcess.workerType = "standard";
+                    } else if (roleProcess.roleType === "longWorker") {
+                        roleProcess.workerType = "long";
+                    } else {
+                        roleProcess.workerType = "Unknown";
+                    }
+                }
+
+                handledBy = roleProcess.friendlyName + " (" + roleProcess.workerType + ")";
+
+                db.close();
+            });
         });
     });
-});
+}
